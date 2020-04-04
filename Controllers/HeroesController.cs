@@ -22,10 +22,25 @@ namespace Heroes.API.Controllers
         }
 
         // GET: api/Heroes
+        // [HttpGet]
+        // public async Task<ActionResult<IEnumerable<HeroValue>>> GetHeroValue()
+        // {
+        //     return await _context.HeroValue.ToListAsync();
+        // }
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<HeroValue>>> GetHeroValue()
+        public async Task<ActionResult<IEnumerable<HeroValue>>> GetHeroValue([FromQuery] string name)
         {
-            return await _context.HeroValue.ToListAsync();
+            // Define a LINQ query
+            var heroquery = from h in _context.HeroValue select h;
+
+            // If the string is not empty, find items 'h' whose name contains the query string
+            if (!String.IsNullOrEmpty(name))
+            {
+                heroquery = heroquery.Where(
+                    h => h.name.Contains(name));
+            }
+        // Return an asynchronous list of heroes that satisfy query
+            return await heroquery.OrderBy(num => num.id).ToListAsync();
         }
 
         // GET: api/Heroes/5
@@ -80,6 +95,13 @@ namespace Heroes.API.Controllers
         [HttpPost]
         public async Task<ActionResult<HeroValue>> PostHeroValue(HeroValue heroValue)
         {
+            if (heroValue == null)
+            {
+                return BadRequest();
+            }
+
+            heroValue.id = _context.HeroValue.Max(h => h.id) + 1;
+
             _context.HeroValue.Add(heroValue);
             await _context.SaveChangesAsync();
 
